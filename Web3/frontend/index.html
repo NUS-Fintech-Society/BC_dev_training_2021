@@ -1,0 +1,129 @@
+<!-- index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Web3 Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- CDN -->
+
+    <!-- Bootstrap CSS only -->
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+      integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+      crossorigin="anonymous"
+    />
+
+    <!-- Inter Font CSS -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/inter-ui/3.15.0/inter.css"
+      rel="stylesheet"
+      integrity="sha512-2ScEqx8oE365TaMpvEhzeFgNndX303Y62SJfTqJ7xeBUS7FV86//D1MAKOjCglApnQMteDSQzn+HqYFIFeNJrw=="
+      crossorigin="anonymous"
+    />
+
+    <!-- jQuery JS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <!-- Web3 JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.3.0/web3.min.js"></script>
+  </head>
+
+  <body class="inter">
+    <div id="alert" class="card w-auto h-auto">
+      <div id="alert-header" class="card-header">Alert</div>
+      <div id="alert-body" class="card-body"></div>
+      <div id="alert-btn"></div>
+    </div>
+
+    <div id="root" class="invisible inter p-3">
+      <div id="address">
+        <p id="account-address"></p>
+        <p id="contract-address"></p>
+      </div>
+      <div id="content" class="margin-top">
+        <span id="data">Click get to retrieve from contract storage</span>
+        <button id="get-btn" class="btn btn-primary">Get from Contract</button>
+        <p></p>
+        <input id="input" placeholder="Enter int" />
+        <button id="set-btn" class="btn btn-success">Set to Contract</button>
+      </div>
+    </div>
+
+    <script type="module">
+      import { isEthEnabled } from './startup.js'
+      import { contractAddress, contractAbi } from './contract.js'
+
+      window.addEventListener('load', async function (_window, event) {
+        if (!isEthEnabled(window)) {
+          // show prompt
+          $('#alert-body').html(
+            'Please install an Ethereum-compatible browser or extension like MetaMask to use this dApp!',
+          )
+          // clear main content
+          $('#root').html('')
+        } else {
+          var network = await web3.eth.net.getNetworkType()
+          if (network !== 'ropsten') {
+            // show prompt
+            $('#alert-body').html(
+              'Please change network to the Ropsten Test Network!',
+            )
+            // clear main content
+            $('#root').html('')
+          } else {
+            // show main content
+            $('#alert').html('')
+            $('#root').removeClass('invisible')
+            startApp()
+          }
+        }
+
+        window.ethereum.autoRefreshOnNetworkChange = false
+        window.ethereum.on('chainChanged', () => {
+          document.location.reload()
+        })
+      })
+
+      async function startApp() {
+        let accounts = await web3.eth.getAccounts()
+
+        web3.eth.defaultAccount = accounts[0]
+
+        $('#root').prepend('')
+
+        let contract = new web3.eth.Contract(contractAbi, contractAddress)
+
+        $('#account-address').html(
+          'Account Address = ' +
+            accounts[0].slice(0, 6) +
+            '...' +
+            accounts[0].slice(accounts[0].length - 6),
+        )
+        $('#contract-address').html('\nContract Address = ' + contractAddress)
+
+        $('#get-btn').on('click', async () => {
+          let data = await contract.methods.getData().call()
+          $('#data').html(data)
+        })
+        console.log(contract.methods.getData())
+
+        $('#set-btn').on('click', async () => {
+          const input = parseInt($('#input').val())
+          if (isNaN(input)) {
+            alert('Please enter a number')
+            return
+          }
+
+          let response = await contract.methods
+            .setOwner()
+            .send({ from: accounts[0], value: input })
+          console.log(response)
+          if (response.status) alert('Successful')
+        })
+      }
+    </script>
+  </body>
+</html>
