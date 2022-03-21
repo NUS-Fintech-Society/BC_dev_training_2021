@@ -118,8 +118,8 @@
           }
 
           let response = await contract.methods
-            .setOwner()
-            .send({ from: accounts[0], value: input })
+            .setData(input.toString())
+            .send({ from: accounts[0] })
           console.log(response)
           if (response.status) alert('Successful')
         })

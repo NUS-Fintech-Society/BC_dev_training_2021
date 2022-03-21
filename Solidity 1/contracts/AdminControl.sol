@@ -7,6 +7,7 @@ contract AdminControl {
         admins.push(msg.sender);
     }
 
+    // storage/ state/ persistent db
     address[] private admins;
 
     modifier onlyAdmins() {
@@ -21,10 +22,12 @@ contract AdminControl {
         _;
     }
 
+    // POST
     function addAdmin(address _admin) public onlyAdmins {
         admins.push(_admin);
     }
 
+    // GET
     function getAdmins() external view returns (address[] memory) {
         return admins;
     }
